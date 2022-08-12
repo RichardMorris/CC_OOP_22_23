@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.InputStream;
-import java.io.StringReader;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 
 public class HelloTest {
+    public static final String LS = System.lineSeparator();
     private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     private final PrintStream originalOut = System.out;
 
@@ -38,7 +38,7 @@ public class HelloTest {
     @Test
     public void testStdout() {
         Hello.main(new String[]{});
-        assertEquals("Hello world!\n", outContent.toString());
+        assertEquals("Hello world!"+ LS, outContent.toString());
     }
 
     @Test
@@ -49,7 +49,7 @@ public class HelloTest {
 
             Hello h = new Hello();
             h.great();
-            assertEquals("Hello Richard\n", outContent.toString());
+            assertEquals("Hello Richard"+ LS, outContent.toString());
         }
     }
     
