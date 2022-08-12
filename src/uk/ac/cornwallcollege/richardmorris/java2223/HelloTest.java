@@ -3,6 +3,8 @@ package uk.ac.cornwallcollege.richardmorris.java2223;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.InputStream;
+import java.io.StringReader;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,5 +41,16 @@ public class HelloTest {
         assertEquals("Hello world!\n", outContent.toString());
     }
 
+    @Test
+    public void testInOut() throws Exception {
+        String string = "Richard";
+        try (InputStream stringStream = new java.io.ByteArrayInputStream(string.getBytes())) {
+            System.setIn(stringStream);
+
+            Hello h = new Hello();
+            h.great();
+            assertEquals("Hello Richard\n", outContent.toString());
+        }
+    }
     
 }
