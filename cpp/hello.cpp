@@ -27,5 +27,10 @@ int main() {
     cout << " num " << num << " dub " << dub << " trip " << trip << endl;
     hack(ptr);
     cout << " num " << num << " dub " << dub << " trip " << trip << endl;
+    
+    int* newint = new(int);
+    *newint = 6;
+    cout << " newint " << *newint << " address " << newint << endl;
+    
     return 0;
 }
