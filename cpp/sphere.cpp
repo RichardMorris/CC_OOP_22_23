@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <stdlib.h>
 #include <math.h>
 using std::cout;
 using std::endl;
@@ -110,12 +111,20 @@ double Sphere::area() {
 	return total_area;
 }
 
-int main() {
-	Sphere sphere(1.0,200,400);
+int main(int argc, char* argv[]) {
+	double r = 1.0;
+    int n_th = 20;
+    int n_phi = 20;
+    if(argc==4) {
+        r = atof(argv[1]);
+        n_th = atoi(argv[2]);
+        n_phi = atoi(argv[3]);
+    }
+    cout << r << " " << n_th << " " << n_phi << endl;
+	Sphere sphere(r,n_th,n_phi);
 	cout.setf(std::ios_base::fixed);
 	cout.precision(3);
-	cout << sphere.area() << endl;
-	double r = 1.0;
-	cout << 4.0 * pi * r * r << endl;
-	cout << pi * pi * r * r << endl;
+	cout << "aprox " << sphere.area() << endl;
+	cout << "standard " << 4.0 * pi * r * r << endl;
+	cout << "ip " << pi * pi * r * r << endl;
 }
