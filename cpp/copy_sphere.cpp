@@ -13,20 +13,23 @@ using std::shared_ptr;
 const double pi = M_PI;
 
 int vec_count=0;
+int max_count=0;
 class Vec3D {
 public:
-	const double x;
-	const double y;
-	const double z;
+	double x;
+	double y;
+	double z;
 
 	Vec3D() : x{0}, y{0}, z{0} {
         cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
         ++vec_count;
+        if(vec_count>max_count) max_count=vec_count;
 	}
 
 	Vec3D(double x_in,double y_in, double z_in) : x{x_in}, y{y_in}, z{z_in} {
         cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
         ++vec_count;
+        if(vec_count>max_count) max_count=vec_count;
 	}
 
     Vec3D(const Vec3D& v) : x{v.x}, y{v.y}, z{v.z} {
@@ -40,14 +43,15 @@ public:
     }
     
     void operator=(const Vec3D &v) {
+        x = v.x; y = v.y; z = v.z;
         cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
     }
 
     
-	Vec3D sub(const Vec3D &other) const {
-	    Vec3D res{x - other.x, y - other.y, z - other.z};
-	    Vec3D neg{other.x - x, other.y - y, other.z - z};
-	    if(x > other.x) {
+	Vec3D sub(const Vec3D v) const {
+	    Vec3D res{x - v.x, y - v.y, z - v.z};
+	    Vec3D neg{v.x - x, v.y - y, v.z - z};
+	    if(x > v.x) {
 		    return res;
 	    } else {
 		    return neg;
@@ -87,6 +91,92 @@ public:
     }
 };
 
+class Triangle {
+	Vec3D u;
+	Vec3D v;
+	Vec3D w;
+public:
+	Triangle(Vec3D ui, Vec3D vi, Vec3D wi) :
+	    u{ui}, v{vi}, w{wi}	{}
+
+	~Triangle() {
+//	    cout << "Triangle destruct\n";
+	}
+
+	double area() {
+		Vec3D v_u = v.sub(u);
+		Vec3D w_u = w.sub(u);
+		Vec3D norm = v_u.cross(w_u);
+		double l = sqrt(norm.lensq()) / 2.0;
+		return l;
+	}
+
+};
+
+class Sphere {
+	double rad;
+	int theta_step;
+	int phi_step;
+
+public:
+	Sphere(double r, int th_in, int ph_inc);
+	double area();
+};
+
+Sphere::Sphere(double r,int th_in, int phi_in) {
+	rad = r;
+	theta_step = th_in;
+	phi_step = phi_in;
+}
+
+double Sphere::area() {
+	double total_area = 0.0;
+	Vec3D row0[phi_step+1];
+	Vec3D row1[phi_step+1];
+	for(int i=0; i<= phi_step; ++i) {
+		row0[i] = Vec3D(
+				rad * sin(0) * cos((2 * pi * i) / phi_step),
+				rad * sin(0) * sin((2 * pi * i) / phi_step),
+				rad * cos(0));
+	}
+	cout << "row 0 " << vec_count << endl;
+	for(int row=1; row<= theta_step; ++row ) {
+
+		for(int i=0; i<= phi_step; ++i) {
+			row1[i] = Vec3D(
+					rad * sin(pi * row / theta_step) * cos(2 * pi * i / phi_step),
+					rad * sin(pi * row / theta_step) * sin(2 * pi * i / phi_step),
+					rad * cos(pi * row / theta_step));
+		}
+  	    cout << "row " << row << " " << vec_count << endl;
+
+		for(int i=0; i< phi_step; ++i) {
+			Triangle t1(row0[i],row0[i+1],row1[i]);
+			total_area += t1.area();
+			Triangle t2(row1[i],row1[i+1],row0[i+1]);
+			total_area += t2.area();
+		}
+
+  	    cout << "row " << row << " " << vec_count << endl;
+		for(int i=0; i<= phi_step; ++i) {
+			row0[i] = row1[i];
+		}
+  	    cout << "row " << row << " " << vec_count << endl;
+	}
+	return total_area;
+}
+
+
+void calc_area(double r, int n_th, int n_phi) {
+	Sphere sphere(r,n_th,n_phi);
+	cout.setf(std::ios_base::fixed);
+	cout.precision(3);
+	double a = sphere.area();
+	cout << "aprox " << a << endl;
+	cout << "standard " << 4.0 * pi * r * r << endl;
+}
+
+
 void heron() {
     Vec3D u{1,0,0};
     Vec3D v{0,1,0};
@@ -114,6 +204,8 @@ int main(int argc, char* argv[]) {
         n_phi = atoi(argv[3]);
     }
 
-    heron();
-    cout << "Num vec " << vec_count << endl;
+//    heron();
+    calc_area(r, n_th, n_phi);
+
+    cout << "Num vec " << vec_count << " max " << max_count << endl;
 }
