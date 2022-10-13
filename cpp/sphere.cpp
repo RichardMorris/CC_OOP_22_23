@@ -4,28 +4,55 @@
 #include <math.h>
 using std::cout;
 using std::endl;
+#define PRINT_ALLOC 1
 
 const double pi = M_PI;
 
-class Vec {
+int vec_count=0;
+int max_count=0;
+int alloc_count=0;
+
+class Vec3D {
 public:
 	double x;
 	double y;
 	double z;
-	Vec(double x_in,double y_in, double z_in) {
-		x = x_in; y = y_in; z = z_in;
+	
+	Vec3D(double x_in,double y_in, double z_in) : x{x_in}, y{y_in}, z{z_in} {
+#ifdef 	PRINT_ALLOC
+        cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+#endif
+        ++vec_count; ++alloc_count;
+        if(vec_count>max_count) max_count=vec_count;
 	}
 
-	Vec* sub(Vec* other) {
-		return new Vec(x - other->x, y - other->y, z - other->z);
+    // Copy constructor
+    Vec3D(const Vec3D& v) : x{v.x}, y{v.y}, z{v.z} {
+#ifdef 	PRINT_ALLOC
+        cout << "Vec3D copy ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+#endif
+        ++vec_count; ++alloc_count;
+        if(vec_count>max_count) max_count=vec_count;
+    }
+
+    // Destructor
+    ~Vec3D() {
+#ifdef 	PRINT_ALLOC
+        cout << "Vec3D desruct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+#endif
+        --vec_count;
+    }
+
+	Vec3D* sub(Vec3D* other) {
+		return new Vec3D(x - other->x, y - other->y, z - other->z);
 	}
 
-	double dot(Vec* v) {
+	double dot(Vec3D* v) {
 		return x * v->x + y * v->y + z * v->z;
 	}
 
-	Vec* cross(Vec* v) {
-		return new Vec(y * v->z - z * v->y, z * v->x - x * v->z, x * v->y - y * v->x  );
+	Vec3D* cross(Vec3D* v) {
+		return new Vec3D(y * v->z - z * v->y, z * v->x - x * v->z, x * v->y - y * v->x  );
 	}
 	double lensq() {
 		return x*x + y*y + z*z;
@@ -33,17 +60,17 @@ public:
 };
 
 class Triangle {
-	Vec* u;
-	Vec* v;
-	Vec* w;
+	Vec3D* u;
+	Vec3D* v;
+	Vec3D* w;
 public:
-	Triangle(Vec* ui, Vec* vi, Vec* wi) {
+	Triangle(Vec3D* ui, Vec3D* vi, Vec3D* wi) {
 		u = ui; v = vi; w = wi;
 	}
 	double area() {
-		Vec* v_u = v->sub(u);
-		Vec* w_u = w->sub(u);
-		Vec* norm = v_u->cross(w_u);
+		Vec3D* v_u = v->sub(u);
+		Vec3D* w_u = w->sub(u);
+		Vec3D* norm = v_u->cross(w_u);
 		double l = sqrt(norm->lensq()) / 2.0;
 		delete v_u;
 		delete w_u;
@@ -71,10 +98,10 @@ Sphere::Sphere(double r,int th_in, int phi_in) {
 
 double Sphere::area() {
 	double total_area = 0.0;
-	Vec* row0[phi_step+1];
-	Vec* row1[phi_step+1];
+	Vec3D* row0[phi_step+1];
+	Vec3D* row1[phi_step+1];
 	for(int i=0; i<= phi_step; ++i) {
-		row0[i] = new Vec(
+		row0[i] = new Vec3D(
 				rad * sin(0) * cos((2 * pi * i) / phi_step),
 				rad * sin(0) * sin((2 * pi * i) / phi_step),
 				rad * cos(0));
@@ -83,14 +110,11 @@ double Sphere::area() {
 	for(int j=1; j<= theta_step; ++j ) {
 
 		for(int i=0; i<= phi_step; ++i) {
-			row1[i] = new Vec(
+			row1[i] = new Vec3D(
 					rad * sin(pi * j / theta_step) * cos(2 * pi * i / phi_step),
 					rad * sin(pi * j / theta_step) * sin(2 * pi * i / phi_step),
 					rad * cos(pi * j / theta_step));
-//			cout << row0[i]->x << " " << row0[i]->y << " " << row0[i]->z << "\t";
-//			cout << row1[i]->x << " " << row1[i]->y << " " << row1[i]->z << endl;
 		}
-//		cout << endl;
 
 		for(int i=0; i< phi_step; ++i) {
 			Triangle t1(row0[i],row0[i+1],row1[i]);
@@ -108,8 +132,20 @@ double Sphere::area() {
 	for(int i=0; i<= phi_step; ++i) {
 		delete row0[i];
 	}
+	
+    cout << "Sphere.area Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
+
 	return total_area;
 }
+
+void calc_area(double r, int n_th, int n_phi) {
+	Sphere sphere(r,n_th,n_phi);
+	double a = sphere.area();
+	cout << "aprox " << a << endl;
+	cout << "standard " << 4.0 * pi * r * r << endl;
+    cout << "calc_area Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
+}
+
 
 int main(int argc, char* argv[]) {
 	double r = 1.0;
@@ -121,10 +157,10 @@ int main(int argc, char* argv[]) {
         n_phi = atoi(argv[3]);
     }
     cout << r << " " << n_th << " " << n_phi << endl;
-	Sphere sphere(r,n_th,n_phi);
 	cout.setf(std::ios_base::fixed);
 	cout.precision(3);
-	cout << "aprox " << sphere.area() << endl;
-	cout << "standard " << 4.0 * pi * r * r << endl;
-	cout << "ip " << pi * pi * r * r << endl;
+
+    calc_area(r,n_th,n_phi);
+
+	cout << "Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 }

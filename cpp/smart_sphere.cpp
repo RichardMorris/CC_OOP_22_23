@@ -9,25 +9,52 @@ using std::unique_ptr;
 using std::make_unique;
 using std::shared_ptr;
 
+//#define PRINT_ALLOC 1
 
 const double pi = M_PI;
+int vec_count=0;
+int max_count=0;
+int alloc_count=0;
 
 class Vec3D {
 public:
 	const double x;
 	const double y;
 	const double z;
+	
+	// Constructor
 	Vec3D(double x_in,double y_in, double z_in) : x{x_in}, y{y_in}, z{z_in} {
+#ifdef 	PRINT_ALLOC
         cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+#endif
+        ++vec_count; ++alloc_count;
+        if(vec_count>max_count) max_count=vec_count;
 	}
 
+    // Copy constructor
     Vec3D(const Vec3D& v) : x{v.x}, y{v.y}, z{v.z} {
+#ifdef 	PRINT_ALLOC
         cout << "Vec3D copy ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+#endif
+        ++vec_count; ++alloc_count;
+        if(vec_count>max_count) max_count=vec_count;
     }
 
+    // Destructor
     ~Vec3D() {
+#ifdef 	PRINT_ALLOC
         cout << "Vec3D desruct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+#endif
+        --vec_count;
     }
+
+    // // Assignment operator
+    // void operator=(const Vec3D &v) {
+    //     // x = v.x; y = v.y; z = v.z;
+    //#ifdef 	PRINT_ALLOC
+    //     cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+    //  #endif
+    // }
 
 	unique_ptr<Vec3D> sub(const Vec3D* other) {
 		return make_unique<Vec3D>(x - other->x, y - other->y, z - other->z);
@@ -53,7 +80,9 @@ public:
     Line(const Vec3D *ui, const Vec3D *vi) : u{Vec3D(*ui)}, v{Vec3D(*vi)} {}
     
     ~Line() {
+#ifdef 	PRINT_ALLOC
         cout << "Line destruct\n";
+#endif
     }
     
     double len() {
@@ -74,7 +103,9 @@ public:
 	{}
 	
 	~Triangle() {
+#ifdef 	PRINT_ALLOC
 	    cout << "Triangle destruct\n";
+#endif
 	}
 
 	double area() {
@@ -142,7 +173,17 @@ double Sphere::area() {
 // 	for(int i=0; i<= phi_step; ++i) {
 // 		delete row0[i];
 // 	}
+
+    cout << "Sphere.area Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 	return total_area;
+}
+
+void calc_area(double r, int n_th, int n_phi) {
+	Sphere sphere(r,n_th,n_phi);
+	double a = sphere.area();
+	cout << "aprox " << a << endl;
+	cout << "standard " << 4.0 * pi * r * r << endl;
+    cout << "calc_area Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -154,13 +195,12 @@ int main(int argc, char* argv[]) {
         n_th = atoi(argv[2]);
         n_phi = atoi(argv[3]);
     }
-//     cout << r << " " << n_th << " " << n_phi << endl;
-// 	Sphere sphere(r,n_th,n_phi);
-// 	cout.setf(std::ios_base::fixed);
-// 	cout.precision(3);
-// 	double a = sphere.area();
-// 	cout << "aprox " << a << endl;
-// 	cout << "standard " << 4.0 * pi * r * r << endl;
+    cout << r << " " << n_th << " " << n_phi << endl;
+	cout.setf(std::ios_base::fixed);
+	cout.precision(3);
+
+    calc_area(r,n_th,n_phi);
+    cout << "main Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 
     
     Vec3D u(1,0,0);
@@ -173,4 +213,7 @@ int main(int argc, char* argv[]) {
     double a = l.len();
     double s = 3*a/2;
     cout << "a " << a << " s " << s << " heron " << sqrt(s*(s-a)*(s-a)*(s-a)) << endl;
+    
+    cout << "Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
+
 }

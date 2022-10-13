@@ -14,6 +14,7 @@ const double pi = M_PI;
 
 int vec_count=0;
 int max_count=0;
+int alloc_count=0;
 class Vec3D {
 public:
 	double x;
@@ -21,33 +22,35 @@ public:
 	double z;
 
 	Vec3D() : x{0}, y{0}, z{0} {
-        cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
-        ++vec_count;
+//        cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+        ++vec_count; ++alloc_count;
         if(vec_count>max_count) max_count=vec_count;
 	}
 
 	Vec3D(double x_in,double y_in, double z_in) : x{x_in}, y{y_in}, z{z_in} {
-        cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
-        ++vec_count;
+//        cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+        ++vec_count; ++alloc_count;
         if(vec_count>max_count) max_count=vec_count;
 	}
 
     Vec3D(const Vec3D& v) : x{v.x}, y{v.y}, z{v.z} {
-        cout << "Vec3D copy ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+//        cout << "Vec3D copy ("  << x << " " << y << " " << z << ") addr " << &x << endl;
         ++vec_count;
     }
 
     ~Vec3D() {
-        cout << "Vec3D desruct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+//        cout << "Vec3D desruct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
         --vec_count;
     }
     
     void operator=(const Vec3D &v) {
         x = v.x; y = v.y; z = v.z;
-        cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+//        cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
     }
 
-    
+    void set(double xi, double yi, double zi) {
+        x = xi; y = yi; z = zi;
+    }
 	Vec3D sub(const Vec3D v) const {
 	    Vec3D res{x - v.x, y - v.y, z - v.z};
 	    Vec3D neg{v.x - x, v.y - y, v.z - z};
@@ -58,8 +61,8 @@ public:
 	    }
 	}
 
-	double dot(const Vec3D* v) const {
-		return x * v->x + y * v->y + z * v->z;
+	double dot(const Vec3D v) const {
+		return x * v.x + y * v.y + z * v.z;
 	}
 
 	Vec3D cross(const Vec3D v) const {
@@ -111,6 +114,33 @@ public:
 		return l;
 	}
 
+	double area2() {
+		Vec3D v_u = v.sub(u);
+		Vec3D w_u = w.sub(u);
+		double a = v_u.lensq();
+		double b = w_u.lensq();
+		double c = v_u.dot(w_u);
+		double l = sqrt(a * b - c * c) / 2.0;
+		return l;
+	}
+
+    
+	double area3() {
+		Vec3D v_u = v.sub(u);
+		Vec3D w_u = w.sub(u);
+		Vec3D w_v = w.sub(v);
+		double asq = v_u.lensq();
+		double bsq = w_u.lensq();
+		double csq = w_v.lensq();
+		double sumsq = asq + bsq + csq;
+		double l = sqrt( sumsq * sumsq- 2*( asq*asq + bsq*bsq + csq*csq));
+		if(l != l) {
+		    cout << asq << " " << bsq << " " << csq << endl;
+		    l = 0;
+		}
+		return l/4;
+	}
+
 };
 
 class Sphere {
@@ -134,34 +164,34 @@ double Sphere::area() {
 	Vec3D row0[phi_step+1];
 	Vec3D row1[phi_step+1];
 	for(int i=0; i<= phi_step; ++i) {
-		row0[i] = Vec3D(
+		row0[i].set(
 				rad * sin(0) * cos((2 * pi * i) / phi_step),
 				rad * sin(0) * sin((2 * pi * i) / phi_step),
 				rad * cos(0));
 	}
-	cout << "row 0 " << vec_count << endl;
+//	cout << "row 0 " << vec_count << endl;
 	for(int row=1; row<= theta_step; ++row ) {
 
 		for(int i=0; i<= phi_step; ++i) {
-			row1[i] = Vec3D(
+			row1[i].set(
 					rad * sin(pi * row / theta_step) * cos(2 * pi * i / phi_step),
 					rad * sin(pi * row / theta_step) * sin(2 * pi * i / phi_step),
 					rad * cos(pi * row / theta_step));
 		}
-  	    cout << "row " << row << " " << vec_count << endl;
+//  	    cout << "row " << row << " " << vec_count << endl;
 
 		for(int i=0; i< phi_step; ++i) {
 			Triangle t1(row0[i],row0[i+1],row1[i]);
-			total_area += t1.area();
+			total_area += t1.area2();
 			Triangle t2(row1[i],row1[i+1],row0[i+1]);
-			total_area += t2.area();
+			total_area += t2.area2();
 		}
 
-  	    cout << "row " << row << " " << vec_count << endl;
+//  	    cout << "row " << row << " " << vec_count << endl;
 		for(int i=0; i<= phi_step; ++i) {
 			row0[i] = row1[i];
 		}
-  	    cout << "row " << row << " " << vec_count << endl;
+//  	    cout << "row " << row << " " << vec_count << endl;
 	}
 	return total_area;
 }
@@ -191,6 +221,9 @@ void heron() {
     cout << "Num vec " << vec_count << endl;
     double s = (a+b+c)/2;
     cout << "a " << a << " s " << s << " heron " << sqrt(s*(s-a)*(s-b)*(s-c)) << endl;
+    
+    Triangle t{u,v,w};
+    cout << t.area() << " " << t.area2() << " " << t.area3() << endl;
 }
 
 
@@ -207,5 +240,5 @@ int main(int argc, char* argv[]) {
 //    heron();
     calc_area(r, n_th, n_phi);
 
-    cout << "Num vec " << vec_count << " max " << max_count << endl;
+    cout << "Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 }

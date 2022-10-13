@@ -26,6 +26,11 @@ public:
         cout << "Vec3D copy ("  << x << " " << y << " " << z << ") addr " << &x << endl;
     }
     
+    void operator=(const Vec3D &v) {
+        x = v.x; y = v.y; z = v.z;
+        cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+    }
+
     unique_ptr<Vec3D> negate(); // defined later
 };
 
