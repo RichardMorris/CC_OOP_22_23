@@ -5,6 +5,9 @@
 using std::cout;
 using std::endl;
 #define PRINT_ALLOC 1
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 const double pi = M_PI;
 
