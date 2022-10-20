@@ -34,14 +34,20 @@ public:
         cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
     }
 
-    class bad_index {};
+    class bad_index {
+    public:
+        int index;
+        int max;
+    friend std::ostream& operator <<(std::ostream& stream, const Vec3D* bad_index);
+
+    };
 
     double operator[](int index) {
         switch(index) {
             case 0: return x;
             case 1: return y;
             case 2: return z;
-            default: throw new bad_index();
+            default: throw new bad_index {index,3};
         }
     }
 
@@ -69,6 +75,10 @@ std::ostream& operator <<(std::ostream& stream, const Vec3D& v) {
     stream << "(" << v.x << "," << v.y << "," << v.z << ")"; 
     return stream;
 }
+std::ostream& operator <<(std::ostream& stream, const Vec3D::bad_index* v) {
+    stream << "Bad index " << v->index << " should be between 0 and " << v->max-1; 
+    return stream;
+}
 
 int main() {
     Vec3D u {1,2,3};
@@ -82,5 +92,7 @@ int main() {
     try {
 
     double q = u[4];
-    } catch(Vec3D::bad_index bi) { }
+    } catch(Vec3D::bad_index *bi) { 
+        cout << bi << endl;
+    }
 }
