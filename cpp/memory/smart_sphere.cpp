@@ -17,6 +17,15 @@ int max_count=0;
 int alloc_count=0;
 
 class Vec3D {
+private:
+    // Assignment operator
+    void operator=(const Vec3D &v) {
+    //     // x = v.x; y = v.y; z = v.z;
+    #ifdef 	PRINT_ALLOC
+        cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
+     #endif
+    }
+
 public:
 	const double x;
 	const double y;
@@ -48,14 +57,6 @@ public:
         --vec_count;
     }
 
-    // // Assignment operator
-    // void operator=(const Vec3D &v) {
-    //     // x = v.x; y = v.y; z = v.z;
-    //#ifdef 	PRINT_ALLOC
-    //     cout << "Vec3D = ("  << x << " " << y << " " << z << ") addr " << &x << endl;
-    //  #endif
-    // }
-
 	unique_ptr<Vec3D> sub(const Vec3D* other) {
 		return make_unique<Vec3D>(x - other->x, y - other->y, z - other->z);
 	}
@@ -72,34 +73,18 @@ public:
 	}
 };
 
-class Line {
-    Vec3D u;
-    Vec3D v;
-    
-public:
-    Line(const Vec3D *ui, const Vec3D *vi) : u{Vec3D(*ui)}, v{Vec3D(*vi)} {}
-    
-    ~Line() {
-#ifdef 	PRINT_ALLOC
-        cout << "Line destruct\n";
-#endif
-    }
-    
-    double len() {
-        unique_ptr<Vec3D> w = u.sub(&v);
-        return sqrt(w->lensq());
-    }
-};
+// A shorthand for the type
+using upVec3D = unique_ptr<Vec3D>;
 
 class Triangle {
-	unique_ptr<Vec3D> u;
-	unique_ptr<Vec3D> v;
-	unique_ptr<Vec3D> w;
+	upVec3D u;
+	upVec3D v;
+	upVec3D w;
 public:
 	Triangle(const Vec3D *ui, const Vec3D *vi, const Vec3D *wi) :
-	    u {unique_ptr<Vec3D>(new Vec3D(*ui))},
-	    v {unique_ptr<Vec3D>(new Vec3D(*vi))},
-	    w {unique_ptr<Vec3D>(new Vec3D(*wi))}
+	    u {upVec3D(new Vec3D(*ui))},
+	    v {upVec3D(new Vec3D(*vi))},
+	    w {upVec3D(new Vec3D(*wi))}
 	{}
 	
 	~Triangle() {
@@ -109,9 +94,9 @@ public:
 	}
 
 	double area() {
-		unique_ptr<Vec3D> v_u = v->sub(u.get());
-		unique_ptr<Vec3D> w_u = w->sub(u.get());
-		unique_ptr<Vec3D> norm = v_u->cross(w_u.get());
+		upVec3D v_u = v->sub(u.get());
+		upVec3D w_u = w->sub(u.get());
+		upVec3D norm = v_u->cross(w_u.get());
 		double l = sqrt(norm->lensq()) / 2.0;
 		return l;
 	}
@@ -152,27 +137,15 @@ double Sphere::area() {
 					rad * sin(pi * j / theta_step) * cos(2 * pi * i / phi_step),
 					rad * sin(pi * j / theta_step) * sin(2 * pi * i / phi_step),
 					rad * cos(pi * j / theta_step));
-//			cout << row0[i]->x << " " << row0[i]->y << " " << row0[i]->z << "\t";
-//			cout << row1[i]->x << " " << row1[i]->y << " " << row1[i]->z << endl;
 		}
-//		cout << endl;
 
 		for(int i=0; i< phi_step; ++i) {
 			Triangle t1(row0[i].get(),row0[i+1].get(),row1[i].get());
 			total_area += t1.area();
 			Triangle t2(row1[i].get(),row1[i+1].get(),row0[i+1].get());
 			total_area += t2.area();
-			//cout << "Tri areas " << t1.area() << " " << t2.area() << endl;
 		}
-
-// 		for(int i=0; i<= phi_step; ++i) {
-// 			delete row0[i];
-// 			row0[i] = row1[i];
-// 		}
 	}
-// 	for(int i=0; i<= phi_step; ++i) {
-// 		delete row0[i];
-// 	}
 
     cout << "Sphere.area Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 	return total_area;
@@ -201,19 +174,5 @@ int main(int argc, char* argv[]) {
 
     calc_area(r,n_th,n_phi);
     cout << "main Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
-
     
-    Vec3D u(1,0,0);
-    Vec3D v(0,1,0);
-    Vec3D w(0,0,1);
-    Triangle t(&u,&v,&w);
-    double A = t.area();
-    cout << " area " << A << endl;
-    Line l(&u,&v);
-    double a = l.len();
-    double s = 3*a/2;
-    cout << "a " << a << " s " << s << " heron " << sqrt(s*(s-a)*(s-a)*(s-a)) << endl;
-    
-    cout << "Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
-
 }
