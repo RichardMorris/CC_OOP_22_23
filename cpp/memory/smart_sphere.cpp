@@ -1,4 +1,5 @@
 #include <iostream>
+#define _USE_MATH_DEFINES // Added this to fix the syntax error for M_PI - David.B
 #include <cmath>
 #include <memory>
 #include <stdlib.h>
