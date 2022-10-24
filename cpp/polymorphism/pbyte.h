@@ -1,6 +1,6 @@
+// include guard so we don't include def twice
 #ifndef PBYTE_H
 #define PBYTE_H
-
 
 #include <iostream>
 #include <string>
@@ -11,14 +11,13 @@ using std::ostream;
 using std::istream;
 using std::string;
 
+// handy def for our underlying datatype
 typedef uint8_t byte;
-
 
 class pbyte;
 
-
-
 class pbyte {
+
     class bit_ref {
         friend class pbtye;
         pbyte& p;
