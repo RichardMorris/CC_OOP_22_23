@@ -20,11 +20,10 @@ using std::string;
 using std::vector;
 
 namespace parser {
-    vector<operator_token> operators;
+    vector<operator_token*> operators;
     map<string, pbyte> variables ; // lookup table for variables
 
-    void add_operator(operator_token tok) { operators.push_back(tok); }
-
+    void add_operator(operator_token* tok) { operators.push_back(tok); }
 
 // https://stackoverflow.com/questions/236129/how-do-i-iterate-over-the-words-of-a-string
 vector<unique_ptr<token>> scan(const string &line) {
@@ -39,19 +38,13 @@ vector<unique_ptr<token>> scan(const string &line) {
 }
 
 // Functional object
-class operator_match : public std::unary_function<operator_token,bool> {
+class operator_match : public std::unary_function<operator_token*,bool> {
     string word;
 public:
     operator_match(const string &s) : word{s} {}
-    bool operator() (operator_token& op) {
-        return op.match(word);
+    bool operator() (operator_token* op) {
+        return op->match(word);
     }
-};
-
-class unmatched_token {
-public:
-    string word;
-    unmatched_token(string s) : word{s} {}
 };
 
 // Turn the next word into a token
@@ -68,31 +61,12 @@ unique_ptr<token> get_token(const string &word) {
     // use the find_if algorithm with the operator_match predicate
     auto itr = find_if(operators.begin(), operators.end(), operator_match{word});
     if(itr != operators.end()) {
-        operator_token& tok = (*itr);
-        unique_ptr<operator_token> res = make_unique<operator_token>(tok);
+        operator_token* tok = (*itr);
+        auto res = tok->unique_copy();
         return res;
     }
 
     throw unmatched_token{word};
-}
-
-void parse(vector<unique_ptr<token>> &tokens) {
-        state st = none;
-
-        for (auto it = tokens.begin(); it != tokens.end(); ++it) {
-            auto& m = *it;
-            token *tok = m.get();
-            state next_st = tok->get_state();
-            cout << "state " << st << tok->get_state_str() << endl;
-            
-            switch(st) {
-            case none:
-                st = next_st;
-                break;
-            }
-            
-            
-        }
 }
 
 token& getToken(vector<unique_ptr<token>> &tokens, int i) {
@@ -105,16 +79,13 @@ void print(vector<unique_ptr<token>> &tokens) {
     // for(auto it : tokens) {}
     // but that requires copying of a UP
     for (auto it = tokens.begin(); it != tokens.end(); ++it) {
-            token *ptr = (*it).get();   // (*it) is the element in vector, a UP. We then get the element its pointing to
+            token *ptr = it->get();   // (*it) is the element in vector, a UP. We then get the element its pointing to
             cout << *ptr << endl;
     }
     cout << endl;
 }
 
 pbyte evaluate(vector<unique_ptr<token>> &tokens) {
-        state st = none;
-        print(tokens);
-        
         // test if assignments
         if(tokens.size()>2) {
             token& e0 = getToken(tokens, 0);
@@ -139,13 +110,18 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
             token& e0 = getToken(tokens, 0);
             if(e0.get_state() == var) {
                 variable_token& vt = dynamic_cast<variable_token&>(e0);
-                return variables[vt.get_name()];
+
+                auto it = variables.find(vt.get_name());
+                 if (it != variables.end()) {
+                	 return it->second;
+                 }
+                 throw Bad_state("Variable " + vt.get_name() + " not found.");
             }
             else if(e0.get_state() == num) {
                 number_token& nt = dynamic_cast<number_token&>(e0);
                 return nt.get_value();
             }
-            throw Bad_state();
+            throw Bad_state("Operator with no arguments");
         }
 
         if(tokens.size()==3) {
@@ -163,7 +139,7 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
                 l = nt.get_value();
             }
             else
-                throw Bad_state();
+                throw Bad_state("First argument should be variable or number");
 
             if(e2.get_state() == var) {
                 variable_token& vt = dynamic_cast<variable_token&>(e2);
@@ -174,25 +150,16 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
                 r = nt.get_value();
             }
             else
-                throw Bad_state();
+                throw Bad_state("Third argument should be variable or number");
 
             if(e1.get_state() == op ) {
                 operator_token& ot = dynamic_cast<operator_token&>(e1);
                 return ot.eval(l,r);
             }
             else
-                throw Bad_state();
+                throw Bad_state("Second argument should be an operator");
         }
-
-        pbyte pb { 0xff };
-        return pb;
-}
-
-const string state_str[] { "none", "var", "op", "num", "op_var", "op_num", "var_op", "num_op",
-    "num_op_num", "num_op_var", "var_op_num", "var_op_var" };
-    
-string token::get_state_str() const {
-    return state_str[st];
+        throw Bad_state("Bad number of tokens");
 }
 
 

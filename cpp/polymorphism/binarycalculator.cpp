@@ -95,29 +95,49 @@ int main(int argc, char* argv[]) {
 	
 //	test_ops();
 	
-    
-    add_operator(operator_token{"=",binary_op_flag, [](pbyte l,pbyte r) { return l;}});
-    add_operator(operator_token{"&",binary_op_flag,
+
+    auto ot1 = operator_token{"&",binary_op_flag,
         [](pbyte l,pbyte r) { return l & r;}
-    });
-    add_operator(operator_token{"|",binary_op_flag,
+    };
+    add_operator(&ot1);
+    auto ot2 = operator_token{"|",binary_op_flag,
         [](pbyte l,pbyte r) { return l | r; }
-    });
-    add_operator(operator_token{"^",binary_op_flag,
+    };
+    add_operator(&ot2);
+    auto ot3 = operator_token{"^",binary_op_flag,
         [](pbyte l,pbyte r) { return l ^ r; }
-    });
+    };
+    add_operator(&ot3);
+    auto ot4 = operator_token{"<<",binary_op_flag,
+        [](pbyte l,pbyte r) { return l << r; }
+    };
+    add_operator(&ot4);
+    auto ot5 = operator_token{">>",binary_op_flag,
+        [](pbyte l,pbyte r) { return l >> r; }
+    };
+    add_operator(&ot5);
+    auto ot6 = operator_token{"=",binary_op_flag | assignment_op,
+    	[](pbyte l,pbyte r) { return l;}};
+    add_operator(&ot6);
     // add_operator(operator_token{"~",unary_prefix,
     //     (pbyte l) { return ~l; }
     // });
 
-    string s2;
-    while(std::getline(cin,s2) ) {
-        cout << "line " << s2 << endl;
-        vector<unique_ptr<token>> tokens = scan(s2);
-
+    string line;
+    while(cout << "Input:\t", std::getline(cin,line) ) {
+        //cout << "line " << s2 << endl;
+    	if(line == "quit")
+    		break;
+    	vector<unique_ptr<token>> tokens;
+		try {
+         tokens = scan(line);
+    	} catch(unmatched_token &ut) {
+    		cout << "Unmatched token: " << ut.get_message() << endl;
+    		continue;
+    	}
         try {
             pbyte res = evaluate(tokens);
-            cout << "Result: " << res << endl;
-        } catch (Bad_state* bs) { cout << "Bad state" << endl; }
+            cout << "Result:\t" << res << endl;
+        } catch (Bad_state& bs) { cout << "Bad state:\t " << bs.get_message() << endl; }
     }
 }
