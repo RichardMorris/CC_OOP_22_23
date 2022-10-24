@@ -11,3 +11,9 @@
 * **shared_sphere.cpp** calculate area of sphere using shared pointers
 * **copy_sphere.cpp** only allocates memory on stack and does a lot of copying values
 * **reference_sphere.cpp** aggresivly minimised memory usage and only uses memory on the stack
+
+## week 4
+* **operators.cpp** Examples of operator overloading from the class
+* **vec3d.h** Fuller implementation of a Vec3D class with operators. Done as a header file
+* **main.cpp** Main program which illustrates use of the header file
+* **pbyte.h** A printable byte class to illustrate bitwise operations
