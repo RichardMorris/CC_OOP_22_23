@@ -91,24 +91,25 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
             token& e0 = getToken(tokens, 0);
             token& e1 = getToken(tokens, 1);
             
-            if(e0.get_state() == var && e1.get_state() == op ) {
+            if(e0.test_state(var_tok) && e1.test_state(assignment_op)) {
                 variable_token& vt = (variable_token&) e0;
-                operator_token& ot = (operator_token&) e1;
-                if(ot.match("=")) {
-                    unique_ptr<token> t0 = std::move(tokens[0]); //
-                    tokens.erase(tokens.begin());
-                    auto t1 = std::move(tokens[0]);
-                    tokens.erase(tokens.begin());
-                    pbyte val = evaluate(tokens);
+                assign_op_token& ot = (assign_op_token&) e1;
 
-                    variables[vt.get_name()] = val;
-                    return val;
-                }
+                unique_ptr<token> t0 = std::move(tokens[0]); //
+                tokens.erase(tokens.begin());
+                auto t1 = std::move(tokens[0]);
+                tokens.erase(tokens.begin());
+
+                pbyte rval = evaluate(tokens);
+                pbyte vval = variables[vt.get_name()];
+                pbyte lval = ot.eval(vval,rval);
+                variables[vt.get_name()] = lval;
+                return lval;
             }
         }
         if(tokens.size()==1) {
             token& e0 = getToken(tokens, 0);
-            if(e0.get_state() == var) {
+            if(e0.test_state(var_tok)) {
                 variable_token& vt = dynamic_cast<variable_token&>(e0);
 
                 auto it = variables.find(vt.get_name());
@@ -117,11 +118,56 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
                  }
                  throw Bad_state("Variable " + vt.get_name() + " not found.");
             }
-            else if(e0.get_state() == num) {
+            else if(e0.test_state(number_tok)) {
                 number_token& nt = dynamic_cast<number_token&>(e0);
                 return nt.get_value();
             }
             throw Bad_state("Operator with no arguments");
+        }
+        if(tokens.size()==2) {
+            token& e0 = getToken(tokens, 0);
+            token& e1 = getToken(tokens, 1);
+            pbyte l, r;
+            unary_op_token* uot = nullptr;
+            bool prefix = false;
+            bool postfix = false;
+
+            if(e0.test_state(var_tok)) {
+                variable_token& vt = dynamic_cast<variable_token&>(e0);
+                l = variables[vt.get_name()];
+            }
+            else if(e0.test_state(number_tok)) {
+                number_token& nt = dynamic_cast<number_token&>(e0);
+                l = nt.get_value();
+            }
+            else if(e0.test_state(unary_prefix)) {
+            	uot = & (dynamic_cast<unary_op_token&>(e0));
+            	prefix = true;
+            }
+            else
+                throw Bad_state("First argument should be variable, number or prefix op");
+
+            if(e1.test_state(var_tok)) {
+                variable_token& vt = dynamic_cast<variable_token&>(e1);
+                r = variables[vt.get_name()];
+            }
+            else if(e1.test_state(number_tok)) {
+                number_token& nt = dynamic_cast<number_token&>(e1);
+                r = nt.get_value();
+            }
+            else if(e1.test_state(unary_postfix)) {
+            	uot = &(dynamic_cast<unary_op_token&>(e1));
+            	postfix = true;
+            }
+            else
+                throw Bad_state("Second argument should be variable, number or postfix op");
+
+            if(prefix && !postfix) {
+            	return uot->eval(r);
+            } else if(!prefix && postfix) {
+            	return uot->eval(l);
+            }
+            throw Bad_state("Either first argument is a prefix op or second argument is a postfix op, but not both");
         }
 
         if(tokens.size()==3) {
@@ -130,30 +176,30 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
             token& e2 = getToken(tokens, 2);
             pbyte l, r;
             
-            if(e0.get_state() == var) {
+            if(e0.test_state(var_tok)) {
                 variable_token& vt = dynamic_cast<variable_token&>(e0);
                 l = variables[vt.get_name()];
             }
-            else if(e0.get_state() == num) {
+            else if(e0.test_state(number_tok)) {
                 number_token& nt = dynamic_cast<number_token&>(e0);
                 l = nt.get_value();
             }
             else
                 throw Bad_state("First argument should be variable or number");
 
-            if(e2.get_state() == var) {
+            if(e2.test_state(var_tok)) {
                 variable_token& vt = dynamic_cast<variable_token&>(e2);
                 r = variables[vt.get_name()];
             }
-            else if(e2.get_state() == num) {
+            else if(e2.test_state(number_tok)) {
                 number_token& nt = dynamic_cast<number_token&>(e2);
                 r = nt.get_value();
             }
             else
                 throw Bad_state("Third argument should be variable or number");
 
-            if(e1.get_state() == op ) {
-                operator_token& ot = dynamic_cast<operator_token&>(e1);
+            if(e1.test_state(binary_op_flag) ) {
+            	binary_op_token& ot = dynamic_cast<binary_op_token&>(e1);
                 return ot.eval(l,r);
             }
             else

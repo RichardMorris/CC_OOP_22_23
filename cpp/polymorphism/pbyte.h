@@ -14,17 +14,22 @@ using std::string;
 // handy def for our underlying datatype
 typedef uint8_t byte;
 
-class pbyte;
+class pbyte; // need a forward declaration of class as bit_ref needs this
 
 class pbyte {
-
+	// inner class to refer to an individual bit in the byte
+	// used by the member access operator [] both as an
+	// l-value  b[4] = 1   and r-value  x = b[0]
     class bit_ref {
         friend class pbtye;
         pbyte& p;
-        int i;
+        int bit_index; //
     public:
-        bit_ref(pbyte &p_in,int ii) :  p{p_in}, i{ii} {};
-        void operator=(int b); // forward decleration as implementation
+        // constructor
+        bit_ref(pbyte &p_in, int ii) :  p{p_in}, bit_index{ii} {};
+        // when used as an l-value: bit_ref = 1
+        void operator=(int bit_val); // forward declaration as implementation
+        // cast to int, used as an rvalue: cout << bit_ref
         operator int() const;  // uses class pbyte which is not full described yet
     };
 
@@ -32,7 +37,7 @@ private:
 	byte b;
 
 public:
-	// Constructor
+	// Default Constructor
 	pbyte() : b{0x00} { }
 
 	// Constructor
@@ -44,7 +49,7 @@ public:
     // Copy constructor
     pbyte(const string& s);
 
-    // Destructor
+    // destructor
     ~pbyte() {    }
 
     // Assignment operator
@@ -66,7 +71,7 @@ public:
     // element access
 
     // read only version
-    // return 0,1 deending on i-th bit
+    // return 0,1 depending on i-th bit
 	int operator[](int index) const {
         byte bit = b >> index;
 	    return bit & 0x01;

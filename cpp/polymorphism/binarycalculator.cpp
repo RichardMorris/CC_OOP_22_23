@@ -96,32 +96,45 @@ int main(int argc, char* argv[]) {
 //	test_ops();
 	
 
-    auto ot1 = operator_token{"&",binary_op_flag,
-        [](pbyte l,pbyte r) { return l & r;}
+    auto ot1 = binary_op_token{"&",binary_op_flag,
+        [](pbyte l, pbyte r) { return l & r;}
     };
     add_operator(&ot1);
-    auto ot2 = operator_token{"|",binary_op_flag,
-        [](pbyte l,pbyte r) { return l | r; }
+    auto ot2 = binary_op_token{"|",binary_op_flag,
+        [](pbyte l, pbyte r) { return l | r; }
     };
     add_operator(&ot2);
-    auto ot3 = operator_token{"^",binary_op_flag,
-        [](pbyte l,pbyte r) { return l ^ r; }
+    auto ot3 = binary_op_token{"^",binary_op_flag,
+        [](pbyte l, pbyte r) { return l ^ r; }
     };
     add_operator(&ot3);
-    auto ot4 = operator_token{"<<",binary_op_flag,
-        [](pbyte l,pbyte r) { return l << r; }
+    auto ot4 = binary_op_token{"<<",binary_op_flag,
+        [](pbyte l, pbyte r) { return l << r; }
     };
     add_operator(&ot4);
-    auto ot5 = operator_token{">>",binary_op_flag,
-        [](pbyte l,pbyte r) { return l >> r; }
+    auto ot5 = binary_op_token{">>",binary_op_flag,
+        [](pbyte l, pbyte r) { return l >> r; }
     };
     add_operator(&ot5);
-    auto ot6 = operator_token{"=",binary_op_flag | assignment_op,
-    	[](pbyte l,pbyte r) { return l;}};
+    auto ot6 = assign_op_token{"=",binary_op_flag | assignment_op,
+    	[](pbyte l, pbyte r) { return r;}};
     add_operator(&ot6);
-    // add_operator(operator_token{"~",unary_prefix,
-    //     (pbyte l) { return ~l; }
-    // });
+
+    auto ot7 = assign_op_token{"+=",binary_op_flag | assignment_op,
+    	[](pbyte l, pbyte r) { return l + r;}};
+    add_operator(&ot7);
+
+    auto ot8 = assign_op_token{"-=",binary_op_flag | assignment_op,
+    	[](pbyte l, pbyte r) { return l - r;}};
+    add_operator(&ot8);
+
+    auto ot9 = unary_op_token{"~", unary_prefix,
+    	[](pbyte l) { return ~l;}};
+    add_operator(&ot9);
+
+    auto ot10 = unary_op_token{"!", unary_postfix,
+    	[](pbyte l) { return ~l;}};
+    add_operator(&ot10);
 
     string line;
     while(cout << "Input:\t", std::getline(cin,line) ) {
