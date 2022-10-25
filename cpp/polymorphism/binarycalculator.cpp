@@ -136,6 +136,17 @@ int main(int argc, char* argv[]) {
     	[](pbyte l) { return ~l;}};
     add_operator(&ot10);
 
+    auto ot11 = unary_binary_op_token{"-", unary_prefix | binary_op_flag,
+    	[](pbyte r) { return - r;},
+        [](pbyte l, pbyte r) { return l - r; }
+    };
+    add_operator(&ot11);
+
+    auto ot12 = binary_op_token{"+", binary_op_flag,
+        [](pbyte l, pbyte r) { return l + r; }
+    };
+    add_operator(&ot12);
+
     string line;
     while(cout << "Input:\t", std::getline(cin,line) ) {
         //cout << "line " << s2 << endl;

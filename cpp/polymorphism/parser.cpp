@@ -92,8 +92,10 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
             token& e1 = getToken(tokens, 1);
             
             if(e0.test_state(var_tok) && e1.test_state(assignment_op)) {
-                variable_token& vt = (variable_token&) e0;
-                assign_op_token& ot = (assign_op_token&) e1;
+                // dynamic_cast<> is safer than regular cast (int) d
+                // https://stackoverflow.com/questions/28002/regular-cast-vs-static-cast-vs-dynamic-cast
+                variable_token& vt = dynamic_cast<variable_token&>(e0);
+                assign_op_token& ot = dynamic_cast<assign_op_token&>(e1);
 
                 unique_ptr<token> t0 = std::move(tokens[0]); //
                 tokens.erase(tokens.begin());

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 using std::cout;
 using std::cin;
 using std::endl;
@@ -72,7 +73,10 @@ void test_ops() {
     cout << b1 << endl;
 
     cout << "Enter an 8 digit binary value\n";
-    cin >> b5;
+    // rather than getting input from terminal we can
+    // turn a string into a input stream
+    std::istringstream iss{"01010101"};
+    iss >> b5;
     cout << "Entered " << b5 << endl;
 }
 

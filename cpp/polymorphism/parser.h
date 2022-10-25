@@ -17,8 +17,9 @@ using std::map;
 
 // All code here placed in name-space
 namespace parser {
-	// Indicates what type of operator we use
-//    enum state { num, var, bop, uop, aop  };
+	// Indicates what type of operator we use, not actually used
+    enum token_type { NUM, VAR, OP };
+    
     // Flag to determine what type of operator we have
     const pbyte binary_op_flag = 0x01;
     const pbyte unary_op_flag =  0x02;
@@ -31,28 +32,37 @@ namespace parser {
     const pbyte unary_prefix = unary_op_flag | prefix_op_flag;
     const pbyte unary_postfix = unary_op_flag | postfix_op_flag;
     
+    // virtual (abstract) base type of all tokens
     class token {
     protected:
+        // byte containing flag info
         pbyte state;
+        // protected constructor, visable to subclasses
         token(pbyte st_in) : state{st_in} {}
-    public:
+        // pure virtual function, each sub-class must provide an implementation
         virtual void print_tok(ostream&) const =0;
-        friend ostream& operator<<(ostream &os,token &tok) { tok.print_tok(os); return os; };
+    public:
+        // virtual distructor must be declared for reasons
         virtual ~token() {}
+        // common output operator, uses virtual function
+        friend ostream& operator<<(ostream &os,const token &tok) {
+            tok.print_tok(os); return os;
+        }
+        // check if the state matches
         bool test_state(pbyte st) const {
         	pbyte pb = state & st;
-        	bool res = pb == st;
-        	return res;
+        	return pb == st;
         }
     };
 
+    // derived type for numbers
     class number_token : public token {
         pbyte value;
-    public:
-        number_token(pbyte p) : token{number_tok}, value{p} {}
         void print_tok(ostream& os) const {
             os << "NT " << value;
         }
+    public:
+        number_token(pbyte p) : token{number_tok}, value{p} {}
         pbyte get_value() const { return value; }
         ~number_token() {
 //            cout << "descruct "; print_tok(cout); cout << endl;
@@ -61,9 +71,9 @@ namespace parser {
 
     class variable_token : public token {
         string variable_name;
+        void print_tok(ostream &os) const { os << "VT " << variable_name; }
     public:
         variable_token(const string& name) : token{var_tok}, variable_name{name} { }
-        void print_tok(ostream &os) const { os << "VT " << variable_name; }
         string get_name() const { return variable_name; }
         ~variable_token() {
 //            cout << "descruct "; print_tok(cout); cout << endl;
@@ -77,12 +87,11 @@ namespace parser {
         	: token{ot.state}, sym{ot.sym} { }
         operator_token(const pbyte& flags, const string& s)
             : token{flags}, sym{s} {}
+        void print_tok(ostream &os) const { os << "OT " << sym; }
      public:
         bool match(const string& word) const {
             return sym == word;
         }
-        void print_tok(ostream &os) const { os << "OT " << sym; }
-        pbyte get_flags() const { return state; }
         ~operator_token() {
 //            cout << "destruct "; print_tok(cout); cout << endl;
         }
@@ -91,16 +100,18 @@ namespace parser {
 
     };
 
-    class unary_op_token : public operator_token {
+    class unary_op_token : public virtual operator_token {
+    protected:
         std::function<pbyte(pbyte)> ufun;
+        void print_tok(ostream &os) const { os << "BOT " << sym; }
     public:
-        unary_op_token(const char* s, const pbyte& op_flags, const std::function<pbyte(pbyte)>& fun)
+        unary_op_token(const char* s, const pbyte& op_flags,
+            const std::function<pbyte(pbyte)>& fun)
         	: operator_token{op_flags, s}, ufun{fun} {}
         unary_op_token(const unary_op_token& ot) :
             	operator_token{ot.state, ot.sym}, ufun{ot.ufun} { }
 
         pbyte eval(pbyte l) const { return ufun(l); }
-        void print_tok(ostream &os) const { os << "BOT " << sym; }
 
         std::unique_ptr<operator_token> unique_copy() const {
         	auto res = std::make_unique<unary_op_token>(*this);
@@ -108,16 +119,18 @@ namespace parser {
         }
     };
 
-    class binary_op_token : public operator_token {
+    class binary_op_token : public virtual operator_token {
+    protected:
         std::function<pbyte(pbyte,pbyte)> bfun;
+        void print_tok(ostream &os) const { os << "BOT " << sym; }
     public:
-        binary_op_token(const char* s, const pbyte& op_flags, const std::function<pbyte(pbyte,pbyte)>& fun)
+        binary_op_token(const char* s, const pbyte& op_flags,
+            const std::function<pbyte(pbyte,pbyte)>& fun)
         	: operator_token{op_flags, s}, bfun{fun} {}
         binary_op_token(const binary_op_token& ot) :
             	operator_token{ot.state, ot.sym}, bfun{ot.bfun} { }
 
         pbyte eval(pbyte l, pbyte r) const { return bfun(l,r); }
-        void print_tok(ostream &os) const { os << "BOT " << sym; }
 
         std::unique_ptr<operator_token> unique_copy() const {
         	auto res = std::make_unique<binary_op_token>(*this);
@@ -128,14 +141,15 @@ namespace parser {
 
     class assign_op_token : public operator_token {
         std::function<pbyte(pbyte,pbyte)> afun;
+        void print_tok(ostream &os) const { os << "AOT " << sym; }
     public:
-        assign_op_token(const char* s, const pbyte& op_flags, const std::function<pbyte(pbyte,pbyte)>& fun)
+        assign_op_token(const char* s, const pbyte& op_flags,
+            const std::function<pbyte(pbyte,pbyte)>& fun)
         	: operator_token{op_flags, s}, afun{fun} {}
         assign_op_token(const assign_op_token& ot)
         	: operator_token{ot.state, ot.sym}, afun{ot.afun} { }
 
         byte eval(pbyte varval, pbyte r) const { return afun(varval, r); }
-        void print_tok(ostream &os) const { os << "AOT " << sym; }
 
         std::unique_ptr<operator_token> unique_copy() const {
         	auto res = std::make_unique<assign_op_token>(*this);
@@ -144,6 +158,27 @@ namespace parser {
 
     };
 
+    // some operators like - can be used in both a binary and unary
+    // context:  x - y, - x.
+    class unary_binary_op_token : public binary_op_token, public unary_op_token {
+        // must override virtual function defined in both subclasses
+        void print_tok(ostream &os) const { os << "UBOT " << sym; }
+    public:
+        unary_binary_op_token(const char* s, const pbyte& op_flags,
+            const std::function<pbyte(pbyte)>& ufun_in,
+            const std::function<pbyte(pbyte,pbyte)>& bfun_in)
+        	: operator_token{op_flags, s}, // directly calls common baseclass
+        	  binary_op_token{s, op_flags, bfun_in}, //
+        	  unary_op_token{s, op_flags, ufun_in} {}
+
+        std::unique_ptr<operator_token> unique_copy() const {
+        	auto res = std::make_unique<unary_binary_op_token>(*this);
+        	return res;
+        }
+
+    };
+    
+    
     // Methods available in this namespace
 
     // scan the input creating a list of tokens

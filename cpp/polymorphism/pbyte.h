@@ -46,11 +46,11 @@ public:
     // Copy constructor
     pbyte(const pbyte& b_in) : b{b_in.b} { }
 
-    // Copy constructor
+    // Constructor from a string
     pbyte(const string& s);
 
     // destructor
-    ~pbyte() {    }
+    ~pbyte() { }
 
     // Assignment operator
     void operator=(const pbyte &v) {
@@ -84,20 +84,23 @@ public:
 	}
  	
  	// type cast operators
-	operator byte() const { return b; }
-	operator int() const { return b; }
+	inline operator byte() const { return b; }
+	inline operator int() const { return b; }
 
     // prefix
-	pbyte& operator++() { ++b; return *this; }
-	// postfix
-	pbyte operator++(int i) { pbyte res { b++ }; return res; }
+	inline pbyte& operator++() { ++b; return *this; }
+	// postfix, dummy argument to distinguish from prefix
+	inline pbyte operator++(int i) { pbyte res { b++ }; return res; }
     // prefix
-	pbyte& operator--() { --b; return *this; }
+	inline pbyte& operator--() { --b; return *this; }
 	// postfix
-	pbyte operator--(int i) { pbyte res { b-- }; return res; }
+	inline pbyte operator--(int i) { pbyte res { b-- }; return res; }
 
     // unary not
 	pbyte operator~() { pbyte res {(byte) ~b}; return res; }
+
+    // unary minus
+	pbyte operator-() { pbyte res {(byte) -b}; return res; }
 	
 	// comparision
 	inline friend bool operator==(const pbyte &u,const pbyte &v) { return u.b == v.b; }
@@ -108,23 +111,22 @@ public:
 	inline friend pbyte operator-(const pbyte &u,const pbyte &v)  { pbyte res { (byte) (u.b - v.b) }; return res; }
 
     // bitwise and, or, xor
-	inline friend pbyte operator&(pbyte u,const pbyte &v) { pbyte res { (byte) (u.b & v.b) }; return res; }
-	inline friend pbyte operator|(pbyte u,const pbyte &v) { pbyte res { (byte) (u.b | v.b) }; return res; }
-	inline friend pbyte operator^(pbyte u,const pbyte &v) { pbyte res { (byte) (u.b ^ v.b) }; return res; }
+	inline friend pbyte operator&(const pbyte &u,const pbyte &v) { pbyte res { (byte) (u.b & v.b) }; return res; }
+	inline friend pbyte operator|(const pbyte &u,const pbyte &v) { pbyte res { (byte) (u.b | v.b) }; return res; }
+	inline friend pbyte operator^(const pbyte &u,const pbyte &v) { pbyte res { (byte) (u.b ^ v.b) }; return res; }
 
 
     // left and right shift
-	inline friend pbyte operator<<(pbyte u,int shift) { pbyte res { (byte) (u.b << shift) }; return res; }
-	inline friend pbyte operator>>(pbyte u,int shift) { pbyte res { (byte) (u.b >> shift) }; return res; }
+	friend pbyte operator<<(const pbyte& u,int shift);
+	friend pbyte operator>>(const pbyte& u,int shift);
 
-    // io
+    // io defined in pbyte.cpp
 	friend ostream& operator<<(ostream &os,const pbyte &v);
-
 	friend istream& operator>>(istream &os,pbyte &v);
-
-
 };
 
-ostream& operator<<(ostream &os,const pbyte &v);
+inline pbyte operator<<(const pbyte& u,int shift) { pbyte res { (byte) (u.b << shift) }; return res; }
+inline pbyte operator>>(const pbyte& u,int shift) { pbyte res { (byte) (u.b >> shift) }; return res; }
+
 
 #endif
