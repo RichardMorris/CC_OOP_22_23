@@ -4,7 +4,8 @@
 #include <vector>
 #include <sstream>
 #include <memory>
-#include <cctype>
+//#include <cctype>
+#include <cassert>
 
 using std::unique_ptr;
 using std::make_unique;
@@ -20,8 +21,11 @@ using std::string;
 using std::vector;
 
 namespace parser {
+    // Stores the known set of operators
+    // Needs to be a pointer type as we don't know the size of the various
+    // sub-classes. Can't have vectors of references.
     vector<operator_token*> operators;
-    map<string, pbyte> variables ; // lookup table for variables
+    map<string, pbyte> variables ; // lookup table for variables and thier values
 
     void add_operator(operator_token* tok) { operators.push_back(tok); }
 
@@ -47,6 +51,26 @@ public:
     }
 };
 
+
+void test_op_match() {
+    // create a function that matches operators with the symbol '|'
+    auto matcher = operator_match("|");
+    
+    // two test object
+    auto ot1 = binary_op_token{"&",binary_op_flag,
+        [](pbyte l, pbyte r) { return l & r;}
+    };
+    auto ot2 = binary_op_token{"|",binary_op_flag,
+        [](pbyte l, pbyte r) { return l | r; }
+    };
+    // apply the matcher to the tokens
+    bool res1 = matcher(&ot1);
+    bool res2 = matcher(&ot2);
+    // assert results first fails, second suceeds
+    assert(!res1);
+    assert(res2);
+}
+
 // Turn the next word into a token
 unique_ptr<token> get_token(const string &word) {
 
@@ -60,8 +84,10 @@ unique_ptr<token> get_token(const string &word) {
     }
     // use the find_if algorithm with the operator_match predicate
     auto itr = find_if(operators.begin(), operators.end(), operator_match{word});
+    // alternative using a lambda function
+    // auto itr = find_if(operators.begin(), operators.end(), [word](operator_token* tok) { return tok->match(word); });
     if(itr != operators.end()) {
-        operator_token* tok = (*itr);
+        operator_token* tok = *itr;
         auto res = tok->unique_copy();
         return res;
     }
@@ -74,15 +100,18 @@ token& getToken(vector<unique_ptr<token>> &tokens, int i) {
     return *e0;
 }
 
-void print(vector<unique_ptr<token>> &tokens) {
-    // it would be nice to use
-    // for(auto it : tokens) {}
+void print_operators() {
+    for(auto tok : operators) {
+        cout << *tok << endl;
+    }
+}
+
+void print(vector<unique_ptr<token>>& tokens) {
     // but that requires copying of a UP
     for (auto it = tokens.begin(); it != tokens.end(); ++it) {
-            token *ptr = it->get();   // (*it) is the element in vector, a UP. We then get the element its pointing to
+            token *ptr = it->get();   // (*it) is the element in vector, a UP. We then get the element its pointing to with get
             cout << *ptr << endl;
     }
-    cout << endl;
 }
 
 pbyte evaluate(vector<unique_ptr<token>> &tokens) {
@@ -97,7 +126,7 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
                 variable_token& vt = dynamic_cast<variable_token&>(e0);
                 assign_op_token& ot = dynamic_cast<assign_op_token&>(e1);
 
-                unique_ptr<token> t0 = std::move(tokens[0]); //
+                auto t0 = std::move(tokens[0]); //
                 tokens.erase(tokens.begin());
                 auto t1 = std::move(tokens[0]);
                 tokens.erase(tokens.begin());
@@ -201,7 +230,7 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
                 throw Bad_state("Third argument should be variable or number");
 
             if(e1.test_state(binary_op_flag) ) {
-            	binary_op_token& ot = dynamic_cast<binary_op_token&>(e1);
+                binary_op_token& ot = dynamic_cast<binary_op_token&>(e1);
                 return ot.eval(l,r);
             }
             else
@@ -210,5 +239,13 @@ pbyte evaluate(vector<unique_ptr<token>> &tokens) {
         throw Bad_state("Bad number of tokens");
 }
 
-
+// Parse and evaluate, may throw Bad_state or unmatched_token
+pbyte parse_evaluate(string line) {
+    vector<unique_ptr<token>> tokens;
+    tokens = scan(line);
+    pbyte res = evaluate(tokens);
+    return res;
 }
+
+
+} // end namespace

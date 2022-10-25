@@ -95,6 +95,7 @@ int main(int argc, char* argv[]) {
 	
 //	test_ops();
 	
+	test_op_match();
 
     auto ot1 = binary_op_token{"&",binary_op_flag,
         [](pbyte l, pbyte r) { return l & r;}
@@ -147,21 +148,23 @@ int main(int argc, char* argv[]) {
     };
     add_operator(&ot12);
 
+    print_operators();
+
     string line;
     while(cout << "Input:\t", std::getline(cin,line) ) {
         //cout << "line " << s2 << endl;
     	if(line == "quit")
     		break;
-    	vector<unique_ptr<token>> tokens;
-		try {
-         tokens = scan(line);
-    	} catch(unmatched_token &ut) {
-    		cout << "Unmatched token: " << ut.get_message() << endl;
-    		continue;
-    	}
+        
         try {
-            pbyte res = evaluate(tokens);
+            pbyte res = parse_evaluate(line);
             cout << "Result:\t" << res << endl;
-        } catch (Bad_state& bs) { cout << "Bad state:\t " << bs.get_message() << endl; }
+            
+        } catch(unmatched_token &ut) {
+            cout << "Unmatched token:\t" << ut.get_message() << endl;
+        } catch (Bad_state& bs) {
+            cout << "Bad state:\t " << bs.get_message() << endl;
+        }
+
     }
 }

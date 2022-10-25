@@ -18,4 +18,4 @@ binarycalculator: $(OBJS)
 pbytemain: $(OBJS2)
 	$(CXX) $(CFLAGS) $(OBJS2) $(LDFLAGS) -o $@
 
-all: binarycalculator
+all: binarycalculator pbytemain

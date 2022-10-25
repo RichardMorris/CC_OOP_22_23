@@ -83,8 +83,6 @@ namespace parser {
     class operator_token : public token {
     protected:
         string sym;
-        operator_token(const operator_token& ot)
-        	: token{ot.state}, sym{ot.sym} { }
         operator_token(const pbyte& flags, const string& s)
             : token{flags}, sym{s} {}
         void print_tok(ostream &os) const { os << "OT " << sym; }
@@ -96,7 +94,9 @@ namespace parser {
 //            cout << "destruct "; print_tok(cout); cout << endl;
         }
 
-        virtual std::unique_ptr<operator_token> unique_copy() const =0; //{ auto res = std::make_unique<operator_token>(*this); return res; }
+        // Used to return a unique_ptr to a copy of the token
+        // sub classes must override
+        virtual std::unique_ptr<operator_token> unique_copy() const =0;
 
     };
 
@@ -108,8 +108,6 @@ namespace parser {
         unary_op_token(const char* s, const pbyte& op_flags,
             const std::function<pbyte(pbyte)>& fun)
         	: operator_token{op_flags, s}, ufun{fun} {}
-        unary_op_token(const unary_op_token& ot) :
-            	operator_token{ot.state, ot.sym}, ufun{ot.ufun} { }
 
         pbyte eval(pbyte l) const { return ufun(l); }
 
@@ -127,8 +125,6 @@ namespace parser {
         binary_op_token(const char* s, const pbyte& op_flags,
             const std::function<pbyte(pbyte,pbyte)>& fun)
         	: operator_token{op_flags, s}, bfun{fun} {}
-        binary_op_token(const binary_op_token& ot) :
-            	operator_token{ot.state, ot.sym}, bfun{ot.bfun} { }
 
         pbyte eval(pbyte l, pbyte r) const { return bfun(l,r); }
 
@@ -146,8 +142,6 @@ namespace parser {
         assign_op_token(const char* s, const pbyte& op_flags,
             const std::function<pbyte(pbyte,pbyte)>& fun)
         	: operator_token{op_flags, s}, afun{fun} {}
-        assign_op_token(const assign_op_token& ot)
-        	: operator_token{ot.state, ot.sym}, afun{ot.afun} { }
 
         byte eval(pbyte varval, pbyte r) const { return afun(varval, r); }
 
@@ -181,8 +175,15 @@ namespace parser {
     
     // Methods available in this namespace
 
+    // parse an expression, then evaluate
+    pbyte parse_evaluate(string line);
+
+
     // scan the input creating a list of tokens
     vector<unique_ptr<token>> scan(const string &line);
+
+    // evaluate a list of tokens
+    pbyte evaluate(vector<unique_ptr<token>> &tokens);
     
     // get the token for a word
     unique_ptr<token> get_token(const string &word);
@@ -193,8 +194,6 @@ namespace parser {
     // get a reference to a token in the list
     token& getToken(vector<unique_ptr<token>>& tokens, int i);
     
-    // evaluate a list of tokens
-    pbyte evaluate(vector<unique_ptr<token>> &tokens);
     
     
     // Represent an error
@@ -205,6 +204,7 @@ namespace parser {
     	string get_message() const { return message; }
     };
 
+    // Represents a unmatched symbol while scanning
     class unmatched_token {
         string word;
     public:
@@ -212,4 +212,6 @@ namespace parser {
     	string get_message() const { return word; }
     };
 
+    void test_op_match();
+    void print_operators();
 }
