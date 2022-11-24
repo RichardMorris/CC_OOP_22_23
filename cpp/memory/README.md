@@ -1,4 +1,4 @@
-# Content 
+# Content
 
 ## week 2
 * **hello.cpp** illustrates passing pointers to function and some hacky manipulation
@@ -10,4 +10,4 @@
 * **shared.cpp** illustrate shared pointers and a case when memory is never freed
 * **shared_sphere.cpp** calculate area of sphere using shared pointers
 * **copy_sphere.cpp** only allocates memory on stack and does a lot of copying values
-* **pointer_sphere** aggresivly minimised memory usage and only uses memory on the stack 
+* **reference_sphere.cpp** aggresivly minimised memory usage and only uses memory on the stack

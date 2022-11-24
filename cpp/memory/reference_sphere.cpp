@@ -16,11 +16,12 @@ int vec_count=0;
 int max_count=0;
 int alloc_count=0;
 class Vec3D {
-public:
+private:
 	double x;
 	double y;
 	double z;
 
+public:
 	Vec3D() : x{0}, y{0}, z{0} {
         cout << "Vec3D construct ("  << x << " " << y << " " << z << ") addr " << &x << endl;
         ++vec_count; ++alloc_count;
@@ -35,7 +36,8 @@ public:
 
     Vec3D(const Vec3D& v) : x{v.x}, y{v.y}, z{v.z} {
         cout << "Vec3D copy ("  << x << " " << y << " " << z << ") addr " << &x << endl;
-        ++vec_count;
+        ++vec_count; ++alloc_count;
+        if(vec_count>max_count) max_count=vec_count;
     }
 
     ~Vec3D() {
@@ -50,95 +52,52 @@ public:
 
     void set(double xi, double yi, double zi) {
         x = xi; y = yi; z = zi;
+        cout << "Vec3D set ("  << x << " " << y << " " << z << ") addr " << &x << endl;
     }
-	Vec3D sub(const Vec3D v) const {
-	    Vec3D res{x - v.x, y - v.y, z - v.z};
-	    Vec3D neg{v.x - x, v.y - y, v.z - z};
-	    if(x > v.x) {
-		    return res;
-	    } else {
-		    return neg;
-	    }
+
+	void set_from_difference(const Vec3D &u, const Vec3D &v) {
+	    set(u.x - v.x, u.y - v.y, u.z - v.z);
 	}
 
-	double dot(const Vec3D v) const {
+	double dot(const Vec3D &v) const {
 		return x * v.x + y * v.y + z * v.z;
 	}
 
-	Vec3D cross(const Vec3D v) const {
-		Vec3D res(y * v.z - z * v.y,
-		            z * v.x - x * v.z,
-            		x * v.y - y * v.x);
-        return res;
-	}
+	void set_from_cross(const Vec3D &u, const Vec3D &v) {
+		set(u.y * v.z - u.z * v.y,
+		            u.z * v.x - u.x * v.z,
+            		u.x * v.y - u.y * v.x);
+ 	}
 	
 	double lensq() const {
 		return x*x + y*y + z*z;
 	}
 };
 
-class Line {
-    const Vec3D &u;
-    const Vec3D &v;
-    
-public:
-    Line(const Vec3D &ui, const Vec3D &vi) : u{ui}, v{vi} {}
-    
-    ~Line() {
-        cout << "Line destruct\n";
-    }
-    
-    double len() const {
-        Vec3D w = u.sub(v);
-        return sqrt(w.lensq());
-    }
-};
-
 class Triangle {
-	Vec3D u;
-	Vec3D v;
-	Vec3D w;
+	Vec3D &u;
+	Vec3D &v;
+	Vec3D &w;
+	
 public:
-	Triangle(Vec3D ui, Vec3D vi, Vec3D wi) :
+	Triangle(Vec3D &ui, Vec3D &vi, Vec3D &wi) :
 	    u{ui}, v{vi}, w{wi}	{}
 
 	~Triangle() {
-	    cout << "Triangle destruct\n";
-	}
-
-	double area() {
-		Vec3D v_u = v.sub(u);
-		Vec3D w_u = w.sub(u);
-		Vec3D norm = v_u.cross(w_u);
-		double l = sqrt(norm.lensq()) / 2.0;
-		return l;
+//	    cout << "Triangle destruct\n";
 	}
 
 	double area2() {
-		Vec3D v_u = v.sub(u);
-		Vec3D w_u = w.sub(u);
+    	static Vec3D v_u; // only created once in lifetime of program
+	    static Vec3D w_u; // so reused often. Could break in multi threaded
+		
+		v_u.set_from_difference(v,u);
+		w_u.set_from_difference(w,u);
 		double a = v_u.lensq();
 		double b = w_u.lensq();
 		double c = v_u.dot(w_u);
 		double l = sqrt(a * b - c * c) / 2.0;
 		return l;
-	}
-
-    
-	double area3() {
-		Vec3D v_u = v.sub(u);
-		Vec3D w_u = w.sub(u);
-		Vec3D w_v = w.sub(v);
-		double asq = v_u.lensq();
-		double bsq = w_u.lensq();
-		double csq = w_v.lensq();
-		double sumsq = asq + bsq + csq;
-		double l = sqrt( sumsq * sumsq- 2*( asq*asq + bsq*bsq + csq*csq));
-		if(l != l) {
-		    cout << asq << " " << bsq << " " << csq << endl;
-		    l = 0;
-		}
-		return l/4;
 	}
 
 };
@@ -161,21 +120,18 @@ Sphere::Sphere(double r,int th_in, int phi_in) {
 
 double Sphere::area() {
 	double total_area = 0.0;
-	Vec3D row0[phi_step+1]; // uses default constructor
+	Vec3D row0[phi_step+1];
 	Vec3D row1[phi_step+1];
 	for(int i=0; i<= phi_step; ++i) {
-	    // uses assignment operator to copy from a vector
-	    // rhs vector will be constructed and quickly destructed
-		row0[i] = Vec3D(
+		row0[i].set(
 				rad * sin(0) * cos((2 * pi * i) / phi_step),
 				rad * sin(0) * sin((2 * pi * i) / phi_step),
 				rad * cos(0));
 	}
-	cout << "row 0 " << vec_count << endl;
+//	cout << "row 0 " << vec_count << endl;
 	for(int row=1; row<= theta_step; ++row ) {
 
 		for(int i=0; i<= phi_step; ++i) {
-		    // eliminates need to make a new Vec3D just set the
 			row1[i].set(
 					rad * sin(pi * row / theta_step) * cos(2 * pi * i / phi_step),
 					rad * sin(pi * row / theta_step) * sin(2 * pi * i / phi_step),

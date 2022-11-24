@@ -87,66 +87,7 @@ public:
 		double l = sqrt(norm->lensq()) / 2.0;
 		return l;
 	}
-
 };
-
-class Sphere {
-	double rad;
-	int theta_step;
-	int phi_step;
-
-public:
-	Sphere(double r, int th_in, int ph_inc);
-	double area();
-};
-
-Sphere::Sphere(double r,int th_in, int phi_in) {
-	rad = r;
-	theta_step = th_in;
-	phi_step = phi_in;
-}
-
-double Sphere::area() {
-	double total_area = 0.0;
-	shared_ptr<Vec3D> row0[phi_step+1];
-	shared_ptr<Vec3D> row1[phi_step+1];
-	for(int i=0; i<= phi_step; ++i) {
-		row0[i] = make_shared<Vec3D>(
-				rad * sin(0) * cos((2 * pi * i) / phi_step),
-				rad * sin(0) * sin((2 * pi * i) / phi_step),
-				rad * cos(0));
-	}
-	cout << endl;
-	for(int j=1; j<= theta_step; ++j ) {
-
-		for(int i=0; i<= phi_step; ++i) {
-			row1[i] = make_shared<Vec3D>(
-					rad * sin(pi * j / theta_step) * cos(2 * pi * i / phi_step),
-					rad * sin(pi * j / theta_step) * sin(2 * pi * i / phi_step),
-					rad * cos(pi * j / theta_step));
-//			cout << row0[i]->x << " " << row0[i]->y << " " << row0[i]->z << "\t";
-//			cout << row1[i]->x << " " << row1[i]->y << " " << row1[i]->z << endl;
-		}
-//		cout << endl;
-
-		for(int i=0; i< phi_step; ++i) {
-			Triangle t1(row0[i],row0[i+1],row1[i]);
-			total_area += t1.area();
-			Triangle t2(row1[i],row1[i+1],row0[i+1]);
-			total_area += t2.area();
-			//cout << "Tri areas " << t1.area() << " " << t2.area() << endl;
-		}
-
-// 		for(int i=0; i<= phi_step; ++i) {
-// 			delete row0[i];
-// 			row0[i] = row1[i];
-// 		}
-	}
-// 	for(int i=0; i<= phi_step; ++i) {
-// 		delete row0[i];
-// 	}
-	return total_area;
-}
 
 class DirectedEdge {
 public:
@@ -156,6 +97,8 @@ public:
     DirectedEdge(shared_ptr<Vec3D> vi) : v{vi} {}
 };
 
+// Illustates a problem with shared pointers
+// where the memory may never be free up
 void cycle() {
     shared_ptr<Vec3D> u{new Vec3D(1,0,0)};
     shared_ptr<Vec3D> v{new Vec3D(0,1,0)};
@@ -169,6 +112,7 @@ void cycle() {
     cout << "Num vec " << vec_count << endl;
 }
 
+//
 void heron() {
     shared_ptr<Vec3D> u{new Vec3D(1,0,0)};
     shared_ptr<Vec3D> v{new Vec3D(0,1,0)};
@@ -178,7 +122,7 @@ void heron() {
         Triangle t(u,v,w);
         double area = t.area();
         cout << "Vector area " << area << endl;
-    }
+    } // Triangle freed when goes out of scope
     
     Line *l1 = new Line(u,v);
     double a = l1->len();
@@ -187,25 +131,16 @@ void heron() {
     Line *l3 = new Line(w,u);
     double c = l3->len();
     cout << "Num vec " << vec_count << endl;
-    u.reset();
-    v.reset();
-    w.reset();
+    u.reset(); // releases a handle to the smart-pointer
+    v.reset(); // won't be freed yet as the lines still references smart-pointer
+    w.reset(); //
     
     delete l1;
-    delete l2;
+    delete l2; // second vector deconstructed here
     double s = (a+b+c)/2;
     cout << "a " << a << " s " << s << " heron " << sqrt(s*(s-a)*(s-b)*(s-c)) << endl;
     
-    delete l3;
-}
-
-void calc_area(double r, int n_th, int n_phi) {
-	Sphere sphere(r,n_th,n_phi);
-	cout.setf(std::ios_base::fixed);
-	cout.precision(3);
-	double a = sphere.area();
-	cout << "aprox " << a << endl;
-	cout << "standard " << 4.0 * pi * r * r << endl;
+    delete l3; // 1st and 3rd vector freed here
 }
 
 int main(int argc, char* argv[]) {
@@ -217,6 +152,9 @@ int main(int argc, char* argv[]) {
         n_th = atoi(argv[2]);
         n_phi = atoi(argv[3]);
     }
+	cout.setf(std::ios_base::fixed);
+	cout.precision(3);
+
     cout << r << " " << n_th << " " << n_phi << endl;
     heron();
     cout << "Num vec " << vec_count << endl;
