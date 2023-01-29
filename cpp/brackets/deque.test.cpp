@@ -40,6 +40,26 @@ TEST_CASE("DQ Pushing and popping")
     showdq(stack);
     REQUIRE( 42 == stack.back() );
 }
+
+TEST_CASE("DQ Examine stack")
+{
+    deque<int> stack;
+    stack.push_back(42);
+    stack.push_back(123);
+    deque<int>::iterator it;
+    it = stack.begin();
+    int val0 = *it;
+    REQUIRE( 42 == val0 );
+    ++it;
+    int val1 = *it;
+    REQUIRE( 123 == val1 );
+    ++it;
+    REQUIRE( it == stack.end() );
+    REQUIRE( 123 == stack.back() );
+    stack.pop_back();
+    REQUIRE( 42 == stack.back() );
+}
+
 /*
 TEST_CASE("DQ A stack of doubles")
 {

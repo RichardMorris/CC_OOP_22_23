@@ -1,3 +1,38 @@
+# Integrating with the CMake build system
+
+CMake set up and runs the system needed to compile projects, and link dependent libraries.
+
+## Running from linux command line 
+
+```
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+Files will be compiled in a separate `build` folder.
+The `cmake ..` command configures the build system depending in the `CMakeList.txt` file.
+The `cmake --build .` command runs the build process, creating an executable in the build directory.
+
+## Running from VS Code
+
+First start VS Code from the brackets folder
+```
+cd brackets
+code .
+```
+
+You'll need the CMake Tools extension. Restarting the workspace may help.
+Select the `Terminal->Run task ...` menu item and choose `CMake: build`. You might need to configure the tasks.
+
+Finally run the `CMake test` task.
+
+## The CMakeList.txt file
+
+This file sets up everything needed to compile the project.
+It downloads the Catch2 library from git
+defines the executables. 
+```
 # Set the minimum required version of CMake to be 3.10
 cmake_minimum_required(VERSION 3.10)
 
@@ -31,6 +66,10 @@ add_executable(tests deque.test.cpp stack.test.cpp brackets.tests.cpp bracket_ma
 # These tests can use the Catch2-provided main
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
+# Automatically discover tests
 include(CTest)
 include(Catch)
 catch_discover_tests(tests)
+```
+
+
