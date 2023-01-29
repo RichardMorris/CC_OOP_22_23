@@ -157,11 +157,12 @@ int main(int argc, char* argv[]) {
         n_th = atoi(argv[2]);
         n_phi = atoi(argv[3]);
     }
+	cout << M_PI << endl;
     cout << r << " " << n_th << " " << n_phi << endl;
 	cout.setf(std::ios_base::fixed);
 	cout.precision(3);
 
-    calc_area(r,n_th,n_phi);
+//    calc_area(r,n_th,n_phi);
 
 	cout << "Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 }
