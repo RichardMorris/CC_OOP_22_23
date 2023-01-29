@@ -1,4 +1,5 @@
 #include <iostream>
+#define _USE_MATH_DEFINES // Added this to fix the syntax error for M_PI - David.B
 #include <cmath>
 #include <stdlib.h>
 #include <math.h>
@@ -98,7 +99,7 @@ Sphere::Sphere(double r,int th_in, int phi_in) {
 
 double Sphere::area() {
 	double total_area = 0.0;
-	Vec3D* row0[phi_step+1];
+	Vec3D* row0[phi_step+1]; // In red highlighted fix by switching the Intellisence compiler to GCC - David.B
 	Vec3D* row1[phi_step+1];
 	for(int i=0; i<= phi_step; ++i) {
 		row0[i] = new Vec3D(
@@ -156,11 +157,12 @@ int main(int argc, char* argv[]) {
         n_th = atoi(argv[2]);
         n_phi = atoi(argv[3]);
     }
+	cout << M_PI << endl;
     cout << r << " " << n_th << " " << n_phi << endl;
 	cout.setf(std::ios_base::fixed);
 	cout.precision(3);
 
-    calc_area(r,n_th,n_phi);
+//    calc_area(r,n_th,n_phi);
 
 	cout << "Num vec " << vec_count << " max " << max_count << " alloc " << alloc_count << endl;
 }
