@@ -41,24 +41,31 @@ TEST_CASE("DQ Pushing and popping")
     REQUIRE( 42 == stack.back() );
 }
 
-TEST_CASE("DQ Examine stack")
+TEST_CASE("DQ insert element")
 {
-    deque<int> stack;
-    stack.push_back(42);
-    stack.push_back(123);
+    deque<int> mydeque;
+    mydeque.push_back(42);
+    mydeque.push_back(123);
     deque<int>::iterator it;
-    it = stack.begin();
+    it = mydeque.begin();
     int val0 = *it;
     REQUIRE( 42 == val0 );
     ++it;
+
+    mydeque.insert(it,53);
+
+    deque<int>::iterator it2;
+    it2 = mydeque.begin();
     int val1 = *it;
-    REQUIRE( 123 == val1 );
-    ++it;
-    REQUIRE( it == stack.end() );
-    REQUIRE( 123 == stack.back() );
-    stack.pop_back();
-    REQUIRE( 42 == stack.back() );
+    REQUIRE( 42 == val0 );
+    ++it2;
+    int val2 = *it2;
+    REQUIRE( 53 == val2 );
+    ++it2;
+    int val3 = *it2;
+    REQUIRE( 123 == val3 );
 }
+
 
 /*
 TEST_CASE("DQ A stack of doubles")

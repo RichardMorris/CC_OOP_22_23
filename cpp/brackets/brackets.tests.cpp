@@ -24,6 +24,12 @@ TEST_CASE("Single open bracket character fails")
     REQUIRE( ! bm1.is_balanced() );
 }
 
+TEST_CASE("Single close bracket character fails")
+{
+    bracket_matcher bm1(")");
+    REQUIRE( ! bm1.is_balanced() );
+}
+
 TEST_CASE("Single open square bracket character fails")
 {
     bracket_matcher bm1("[");
