@@ -30,3 +30,14 @@ hs_err_pid*
 cpp/brackets/build/
 cpp/memory/sphere
 cpp/polymorphism/Students
+cpp/threads/build/
+cpp/threads/.vscode/settings.json
+cpp/brackets/.vscode/launch.json
+cpp/polymorphism/.vscode/c_cpp_properties.json
+cpp/polymorphism/.vscode/launch.json
+cpp/polymorphism/.vscode/tasks.json
+.idea/.gitignore
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+CC_OOP_22_23.iml
