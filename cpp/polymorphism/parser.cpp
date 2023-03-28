@@ -84,8 +84,24 @@ unique_ptr<token> get_token(const string &word) {
     }
     // use the find_if algorithm with the operator_match predicate
     auto itr = find_if(operators.begin(), operators.end(), operator_match{word});
+    
+    
     // alternative using a lambda function
-    // auto itr = find_if(operators.begin(), operators.end(), [word](operator_token* tok) { return tok->match(word); });
+    auto itr = find_if(operators.begin(), operators.end(),
+     [word](operator_token* tok) { return tok->match(word); });
+
+     // find_if loops through a sequence and uses 
+     //the function that you pass in to see if it matches
+
+     // find_if(begin, end, fun) {
+     //     for(i = begin; i< end; ++i ) {
+     //           if( fun(i) == true) 
+     //               return i;
+     //               
+     //}   
+     //}
+    
+    
     if(itr != operators.end()) {
         operator_token* tok = *itr;
         auto res = tok->unique_copy();
